@@ -14,6 +14,12 @@ DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
+# ── Broadcast ─────────────────────────────────────────────────────────────────
+_raw_ids = os.getenv("BROADCAST_ADMIN_IDS", "")
+BROADCAST_ADMIN_IDS: set[int] = {
+    int(x.strip()) for x in _raw_ids.split(",") if x.strip().lstrip("-").isdigit()
+}
+
 # ── Application ───────────────────────────────────────────────────────────────
 LOG_LEVEL: str            = os.getenv("LOG_LEVEL", "WARNING").upper()
 TZ: str                   = os.getenv("TZ", "Asia/Amman")

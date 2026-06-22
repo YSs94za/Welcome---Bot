@@ -3,6 +3,7 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from keyboards.inline import start_keyboard
+from database.pg_db import register_chat
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -28,6 +29,12 @@ async def cmd_start(message: Message) -> None:
         "User %s sent /start in chat %d",
         message.from_user.id if message.from_user else "?",
         message.chat.id,
+    )
+    await register_chat(
+        chat_id=message.chat.id,
+        chat_type=message.chat.type,
+        title=message.chat.title or message.chat.full_name,
+        username=message.chat.username,
     )
     await message.answer_animation(
         animation=START_GIF,

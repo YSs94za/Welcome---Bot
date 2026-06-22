@@ -2,7 +2,7 @@ import logging
 from aiogram import Router, Bot
 from aiogram.types import ChatMemberUpdated
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, JOIN_TRANSITION
-from database.pg_db import get_welcome_message, get_buttons
+from database.pg_db import get_welcome_message, get_buttons, register_chat
 from keyboards.inline import build_welcome_keyboard
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,13 @@ async def on_new_member(event: ChatMemberUpdated, bot: Bot) -> None:
 
     chat_id    = event.chat.id
     chat_title = event.chat.title or "the group"
+
+    await register_chat(
+        chat_id=chat_id,
+        chat_type=event.chat.type,
+        title=event.chat.title,
+        username=event.chat.username,
+    )
 
     welcome_text = await get_welcome_message(chat_id)
     if not welcome_text:

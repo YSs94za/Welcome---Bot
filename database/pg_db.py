@@ -49,7 +49,17 @@ async def init_postgres() -> None:
                 added_at   TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-    logger.info("PostgreSQL schema ready (welcome_messages, buttons, channels)")
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS known_chats (
+                chat_id      BIGINT PRIMARY KEY,
+                chat_type    TEXT NOT NULL,
+                title        TEXT,
+                username     TEXT,
+                registered_at TIMESTAMPTZ DEFAULT NOW(),
+                updated_at   TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+    logger.info("PostgreSQL schema ready (welcome_messages, buttons, channels, known_chats)")
 
 
 async def close_pool() -> None:
@@ -183,3 +193,42 @@ async def channel_exists(channel_id: int) -> bool:
             "SELECT 1 FROM channels WHERE channel_id = $1", channel_id
         )
         return row is not None
+
+
+# ── Known chats (broadcast targets) ───────────────────────────────────────────
+
+async def register_chat(
+    chat_id: int,
+    chat_type: str,
+    title: str | None = None,
+    username: str | None = None,
+) -> None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO known_chats (chat_id, chat_type, title, username, updated_at)
+            VALUES ($1, $2, $3, $4, NOW())
+            ON CONFLICT (chat_id) DO UPDATE
+                SET chat_type  = EXCLUDED.chat_type,
+                    title      = EXCLUDED.title,
+                    username   = EXCLUDED.username,
+                    updated_at = NOW()
+            """,
+            chat_id, chat_type, title, username,
+        )
+
+
+async def get_all_chats() -> list[dict]:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT chat_id, chat_type, title, username FROM known_chats ORDER BY registered_at DESC"
+        )
+        return [dict(r) for r in rows]
+
+
+async def remove_chat(chat_id: int) -> None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute("DELETE FROM known_chats WHERE chat_id = $1", chat_id)

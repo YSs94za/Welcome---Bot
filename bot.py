@@ -4,11 +4,12 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 from config import BOT_TOKEN, MAX_CONCURRENT_TASKS, START_FROM_LATEST
 from database.pg_db import init_postgres, close_pool
-from handlers import start, admin, channels, welcome, callbacks
+from handlers import start, admin, channels, welcome, callbacks, broadcast
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,8 @@ BOT_COMMANDS = [
     BotCommand(command="add_channel",   description="Register a channel"),
     BotCommand(command="del_channel",   description="Remove channel by ID"),
     BotCommand(command="list_channels", description="List all registered channels"),
+    BotCommand(command="broadcast",     description="Broadcast a message to all known chats"),
+    BotCommand(command="cancel",        description="Cancel current operation"),
 ]
 
 
@@ -47,11 +50,12 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    dp = Dispatcher()
+    dp = Dispatcher(storage=MemoryStorage())
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
     dp.include_router(callbacks.router)
+    dp.include_router(broadcast.router)
     dp.include_router(start.router)
     dp.include_router(admin.router)
     dp.include_router(channels.router)
