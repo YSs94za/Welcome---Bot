@@ -24,7 +24,11 @@ START_CAPTION = (
 
 @router.message(CommandStart())
 async def cmd_start(message: Message) -> None:
-    logger.info("User %s sent /start in chat %d", message.from_user.id if message.from_user else "?", message.chat.id)
+    logger.info(
+        "User %s sent /start in chat %d",
+        message.from_user.id if message.from_user else "?",
+        message.chat.id,
+    )
     await message.answer_animation(
         animation=START_GIF,
         caption=START_CAPTION,
