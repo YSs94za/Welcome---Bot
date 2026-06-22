@@ -232,3 +232,26 @@ async def remove_chat(chat_id: int) -> None:
     pool = await get_pool()
     async with pool.acquire() as conn:
         await conn.execute("DELETE FROM known_chats WHERE chat_id = $1", chat_id)
+
+
+# ── Stats ──────────────────────────────────────────────────────────────────────
+
+async def get_stats() -> dict:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        total_chats      = await conn.fetchval("SELECT COUNT(*) FROM known_chats")
+        groups           = await conn.fetchval("SELECT COUNT(*) FROM known_chats WHERE chat_type IN ('group','supergroup')")
+        private          = await conn.fetchval("SELECT COUNT(*) FROM known_chats WHERE chat_type = 'private'")
+        welcome_count    = await conn.fetchval("SELECT COUNT(*) FROM welcome_messages")
+        button_count     = await conn.fetchval("SELECT COUNT(*) FROM buttons")
+        channel_count    = await conn.fetchval("SELECT COUNT(*) FROM channels")
+        chats_with_btn   = await conn.fetchval("SELECT COUNT(DISTINCT chat_id) FROM buttons")
+    return {
+        "total_chats":    total_chats,
+        "groups":         groups,
+        "private":        private,
+        "welcome_count":  welcome_count,
+        "button_count":   button_count,
+        "chats_with_btn": chats_with_btn,
+        "channel_count":  channel_count,
+    }

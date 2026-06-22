@@ -12,6 +12,7 @@ from database.pg_db import (
     add_button,
     delete_button,
     delete_all_buttons,
+    get_stats,
 )
 
 logger = logging.getLogger(__name__)
@@ -103,3 +104,22 @@ async def cmd_list_buttons(message: Message) -> None:
         return
     lines = [f"<code>#{b['id']}</code> — {b['label']}  →  {b['url']}" for b in buttons]
     await message.answer("<b>📎 Buttons:</b>\n\n" + "\n".join(lines))
+
+
+@router.message(Command("stats"))
+async def cmd_stats(message: Message) -> None:
+    s = await get_stats()
+    text = (
+        "<b>📊 Bot Statistics</b>\n\n"
+        "<b>🌐 Reach</b>\n"
+        f"  Total known chats:   <b>{s['total_chats']}</b>\n"
+        f"  ├ Groups/Supergroups: <b>{s['groups']}</b>\n"
+        f"  └ Private chats:      <b>{s['private']}</b>\n\n"
+        "<b>📝 Welcome System</b>\n"
+        f"  Configured welcomes:  <b>{s['welcome_count']}</b>\n"
+        f"  Total buttons:        <b>{s['button_count']}</b>\n"
+        f"  Chats with buttons:   <b>{s['chats_with_btn']}</b>\n\n"
+        "<b>📡 Channels</b>\n"
+        f"  Registered channels:  <b>{s['channel_count']}</b>"
+    )
+    await message.answer(text)

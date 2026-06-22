@@ -25,6 +25,7 @@ BOT_COMMANDS = [
     BotCommand(command="del_channel",   description="Remove channel by ID"),
     BotCommand(command="list_channels", description="List all registered channels"),
     BotCommand(command="broadcast",     description="Broadcast a message to all known chats"),
+    BotCommand(command="stats",         description="Show bot reach & database statistics"),
     BotCommand(command="cancel",        description="Cancel current operation"),
 ]
 
