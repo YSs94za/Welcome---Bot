@@ -11,19 +11,19 @@ if not BOT_TOKEN:
 
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-PGHOST: str     = os.getenv("PGHOST", "localhost")
-PGPORT: int     = int(os.getenv("PGPORT", "5432"))
-PGUSER: str     = os.getenv("PGUSER", "")
-PGPASSWORD: str = os.getenv("PGPASSWORD", "")
-PGDATABASE: str = os.getenv("PGDATABASE", "")
+PGHOST: str       = os.getenv("PGHOST", "localhost")
+PGPORT: int       = int(os.getenv("PGPORT", "5432"))
+PGUSER: str       = os.getenv("PGUSER", "")
+PGPASSWORD: str   = os.getenv("PGPASSWORD", "")
+PGDATABASE: str   = os.getenv("PGDATABASE", "")
 
 # ── Application ───────────────────────────────────────────────────────────────
-LOG_LEVEL: str           = os.getenv("LOG_LEVEL", "WARNING").upper()
-TZ: str                  = os.getenv("TZ", "Asia/Amman")
+LOG_LEVEL: str            = os.getenv("LOG_LEVEL", "WARNING").upper()
+TZ: str                   = os.getenv("TZ", "Asia/Amman")
 MAX_CONCURRENT_TASKS: int = int(os.getenv("MAX_CONCURRENT_TASKS", "2"))
-START_FROM_LATEST: bool  = os.getenv("START_FROM_LATEST", "true").lower() == "true"
+START_FROM_LATEST: bool   = os.getenv("START_FROM_LATEST", "true").lower() == "true"
 
-# ── Logging setup ─────────────────────────────────────────────────────────────
+# ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.WARNING),
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
