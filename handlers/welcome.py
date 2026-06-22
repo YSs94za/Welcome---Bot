@@ -19,15 +19,16 @@ async def on_new_member(event: ChatMemberUpdated, bot: Bot) -> None:
     if user.is_bot:
         return
 
-    chat_id = event.chat.id
+    chat_id    = event.chat.id
     chat_title = event.chat.title or "the group"
+
     welcome_text = await get_welcome_message(chat_id)
     if not welcome_text:
         return
 
     buttons = await get_buttons(chat_id)
-    kb = build_welcome_keyboard(buttons)
-    text = _render(welcome_text, user.full_name, chat_title)
+    kb      = build_welcome_keyboard(buttons)
+    text    = _render(welcome_text, user.full_name, chat_title)
 
     try:
         await bot.send_message(chat_id, text, reply_markup=kb, parse_mode="HTML")
