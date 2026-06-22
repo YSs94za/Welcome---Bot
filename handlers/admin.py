@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from filters.admin import AdminFilter
 from keyboards.inline import build_welcome_keyboard
-from database.sqlite_db import (
+from database.pg_db import (
     get_welcome_message,
     set_welcome_message,
     delete_welcome_message,

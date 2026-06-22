@@ -11,11 +11,8 @@ if not BOT_TOKEN:
 
 # ── PostgreSQL ────────────────────────────────────────────────────────────────
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
-PGHOST: str       = os.getenv("PGHOST", "localhost")
-PGPORT: int       = int(os.getenv("PGPORT", "5432"))
-PGUSER: str       = os.getenv("PGUSER", "")
-PGPASSWORD: str   = os.getenv("PGPASSWORD", "")
-PGDATABASE: str   = os.getenv("PGDATABASE", "")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
 # ── Application ───────────────────────────────────────────────────────────────
 LOG_LEVEL: str            = os.getenv("LOG_LEVEL", "WARNING").upper()

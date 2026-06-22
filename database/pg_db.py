@@ -1,6 +1,6 @@
 import logging
 import asyncpg
-from config import PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE
+from config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
@@ -11,21 +11,34 @@ async def get_pool() -> asyncpg.Pool:
     global _pool
     if _pool is None:
         _pool = await asyncpg.create_pool(
-            host=PGHOST,
-            port=PGPORT,
-            user=PGUSER,
-            password=PGPASSWORD,
-            database=PGDATABASE,
+            DATABASE_URL,
             min_size=1,
-            max_size=5,
+            max_size=10,
         )
-        logger.info("PostgreSQL pool created (host=%s db=%s)", PGHOST, PGDATABASE)
+        logger.info("PostgreSQL pool created")
     return _pool
 
 
 async def init_postgres() -> None:
     pool = await get_pool()
     async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS welcome_messages (
+                chat_id BIGINT PRIMARY KEY,
+                message TEXT NOT NULL
+            )
+        """)
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS buttons (
+                id      SERIAL PRIMARY KEY,
+                chat_id BIGINT NOT NULL,
+                label   TEXT   NOT NULL,
+                url     TEXT   NOT NULL
+            )
+        """)
+        await conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_buttons_chat ON buttons(chat_id)"
+        )
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS channels (
                 id         SERIAL PRIMARY KEY,
@@ -36,7 +49,7 @@ async def init_postgres() -> None:
                 added_at   TIMESTAMPTZ DEFAULT NOW()
             )
         """)
-    logger.info("PostgreSQL schema ready")
+    logger.info("PostgreSQL schema ready (welcome_messages, buttons, channels)")
 
 
 async def close_pool() -> None:
@@ -46,7 +59,79 @@ async def close_pool() -> None:
         _pool = None
 
 
-# ── Channels CRUD ─────────────────────────────────────────────────────────────
+# ── Welcome messages ───────────────────────────────────────────────────────────
+
+async def get_welcome_message(chat_id: int) -> str | None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT message FROM welcome_messages WHERE chat_id = $1", chat_id
+        )
+        return row["message"] if row else None
+
+
+async def set_welcome_message(chat_id: int, message: str) -> None:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO welcome_messages (chat_id, message) VALUES ($1, $2)
+            ON CONFLICT (chat_id) DO UPDATE SET message = EXCLUDED.message
+            """,
+            chat_id, message,
+        )
+
+
+async def delete_welcome_message(chat_id: int) -> bool:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM welcome_messages WHERE chat_id = $1", chat_id
+        )
+        return result.split()[-1] != "0"
+
+
+# ── Buttons ────────────────────────────────────────────────────────────────────
+
+async def get_buttons(chat_id: int) -> list[dict]:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, label, url FROM buttons WHERE chat_id = $1 ORDER BY id",
+            chat_id,
+        )
+        return [{"id": r["id"], "label": r["label"], "url": r["url"]} for r in rows]
+
+
+async def add_button(chat_id: int, label: str, url: str) -> int:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "INSERT INTO buttons (chat_id, label, url) VALUES ($1, $2, $3) RETURNING id",
+            chat_id, label, url,
+        )
+        return row["id"]  # type: ignore[index]
+
+
+async def delete_button(button_id: int, chat_id: int) -> bool:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM buttons WHERE id = $1 AND chat_id = $2", button_id, chat_id
+        )
+        return result.split()[-1] != "0"
+
+
+async def delete_all_buttons(chat_id: int) -> int:
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM buttons WHERE chat_id = $1", chat_id
+        )
+        return int(result.split()[-1])
+
+
+# ── Channels ───────────────────────────────────────────────────────────────────
 
 async def add_channel(
     channel_id: int,

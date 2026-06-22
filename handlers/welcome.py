@@ -2,7 +2,7 @@ import logging
 from aiogram import Router, Bot
 from aiogram.types import ChatMemberUpdated
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, JOIN_TRANSITION
-from database.sqlite_db import get_welcome_message, get_buttons
+from database.pg_db import get_welcome_message, get_buttons
 from keyboards.inline import build_welcome_keyboard
 
 logger = logging.getLogger(__name__)

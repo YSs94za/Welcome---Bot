@@ -7,7 +7,6 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.types import BotCommand
 
 from config import BOT_TOKEN, MAX_CONCURRENT_TASKS, START_FROM_LATEST
-from database.sqlite_db import init_sqlite
 from database.pg_db import init_postgres, close_pool
 from handlers import start, admin, channels, welcome, callbacks
 
@@ -28,7 +27,6 @@ BOT_COMMANDS = [
 
 
 async def on_startup(bot: Bot) -> None:
-    await init_sqlite()
     await init_postgres()
     await bot.set_my_commands(BOT_COMMANDS)
     me = await bot.get_me()
