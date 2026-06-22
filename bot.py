@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
@@ -33,8 +32,10 @@ async def on_startup(bot: Bot) -> None:
     await init_postgres()
     await bot.set_my_commands(BOT_COMMANDS)
     me = await bot.get_me()
-    logger.warning("Bot @%s (id=%d) started | max_tasks=%d start_from_latest=%s",
-                   me.username, me.id, MAX_CONCURRENT_TASKS, START_FROM_LATEST)
+    logger.warning(
+        "Bot @%s (id=%d) started | max_tasks=%d start_from_latest=%s",
+        me.username, me.id, MAX_CONCURRENT_TASKS, START_FROM_LATEST,
+    )
 
 
 async def on_shutdown(bot: Bot) -> None:
@@ -49,25 +50,19 @@ async def main() -> None:
     )
 
     dp = Dispatcher()
-
-    # ── Startup / shutdown ────────────────────────────────────────────────────
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    # ── Routers (order matters: most specific first) ───────────────────────────
-    dp.include_router(callbacks.router)   # callback_query handlers
-    dp.include_router(start.router)       # /start
-    dp.include_router(admin.router)       # welcome + button management (admin)
-    dp.include_router(channels.router)    # channel management (admin)
-    dp.include_router(welcome.router)     # new member join events
-
-    # Skip updates that arrived while the bot was offline
-    drop_pending = START_FROM_LATEST
+    dp.include_router(callbacks.router)
+    dp.include_router(start.router)
+    dp.include_router(admin.router)
+    dp.include_router(channels.router)
+    dp.include_router(welcome.router)
 
     await dp.start_polling(
         bot,
         allowed_updates=["message", "callback_query", "chat_member"],
-        drop_pending_updates=drop_pending,
+        drop_pending_updates=START_FROM_LATEST,
     )
 
 
