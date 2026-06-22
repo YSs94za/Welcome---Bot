@@ -6,6 +6,7 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
+from aiogram.exceptions import TelegramConflictError
 
 from config import BOT_TOKEN, MAX_CONCURRENT_TASKS, START_FROM_LATEST
 from database.pg_db import init_postgres, close_pool
@@ -87,6 +88,12 @@ async def main() -> None:
             allowed_updates=["message", "callback_query", "chat_member"],
             drop_pending_updates=START_FROM_LATEST,
         )
+    except TelegramConflictError:
+        logger.critical(
+            "Polling conflict detected (409): another bot instance is already running. "
+            "Stop the other instance before starting a new one."
+        )
+        raise
     except Exception as exc:
         logger.critical("Polling failed: %s", exc)
         raise
@@ -97,6 +104,8 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
+    except TelegramConflictError:
+        raise SystemExit(1)
     except Exception as exc:
         logger.critical("Fatal error: %s", exc)
         raise

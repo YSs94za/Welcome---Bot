@@ -2,6 +2,7 @@ import logging
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.exceptions import TelegramBadRequest
 from keyboards.inline import start_keyboard
 from database.pg_db import register_chat
 
@@ -36,8 +37,12 @@ async def cmd_start(message: Message) -> None:
         title=message.chat.title or message.chat.full_name,
         username=message.chat.username,
     )
-    await message.answer_animation(
-        animation=START_GIF,
-        caption=START_CAPTION,
-        reply_markup=start_keyboard(),
-    )
+    try:
+        await message.answer_animation(
+            animation=START_GIF,
+            caption=START_CAPTION,
+            reply_markup=start_keyboard(),
+        )
+    except TelegramBadRequest as exc:
+        logger.warning("Could not send start animation (%s) — falling back to text", exc)
+        await message.answer(START_CAPTION, reply_markup=start_keyboard())

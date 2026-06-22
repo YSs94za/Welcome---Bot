@@ -1,6 +1,7 @@
 import logging
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
 from keyboards.inline import developer_keyboard, start_keyboard
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,9 @@ COMMANDS_TEXT = (
     "/add_channel — Add channel (reply to forwarded msg, or send ID/@username)\n"
     "/del_channel <code>&lt;channel_id&gt;</code> — Remove channel\n"
     "/list_channels — List all registered channels\n\n"
+    "<b>Broadcast (super-admin only):</b>\n"
+    "/broadcast — Send a message to all known chats\n"
+    "/stats — Show bot statistics\n\n"
     "<b>Placeholders:</b>\n"
     "<code>{name}</code> — Member's full name\n"
     "<code>{chat}</code> — Group name"
@@ -54,11 +58,18 @@ DEVELOPER_TEXT = (
 @router.callback_query(F.data == "developer")
 async def cb_developer(call: CallbackQuery) -> None:
     await call.answer()
-    await call.message.answer_photo(  # type: ignore[union-attr]
-        photo=DEV_PHOTO,
-        caption=DEVELOPER_TEXT,
-        reply_markup=developer_keyboard(),
-    )
+    try:
+        await call.message.answer_photo(  # type: ignore[union-attr]
+            photo=DEV_PHOTO,
+            caption=DEVELOPER_TEXT,
+            reply_markup=developer_keyboard(),
+        )
+    except TelegramBadRequest as exc:
+        logger.warning("Could not send developer photo (%s) — sending text fallback", exc)
+        await call.message.answer(  # type: ignore[union-attr]
+            DEVELOPER_TEXT,
+            reply_markup=developer_keyboard(),
+        )
 
 
 @router.callback_query(F.data == "commands")
@@ -73,8 +84,15 @@ async def cb_commands(call: CallbackQuery) -> None:
 @router.callback_query(F.data == "back_start")
 async def cb_back_start(call: CallbackQuery) -> None:
     await call.answer()
-    await call.message.answer_animation(  # type: ignore[union-attr]
-        animation=START_GIF,
-        caption=START_CAPTION,
-        reply_markup=start_keyboard(),
-    )
+    try:
+        await call.message.answer_animation(  # type: ignore[union-attr]
+            animation=START_GIF,
+            caption=START_CAPTION,
+            reply_markup=start_keyboard(),
+        )
+    except TelegramBadRequest as exc:
+        logger.warning("Could not send start animation (%s) — sending text fallback", exc)
+        await call.message.answer(  # type: ignore[union-attr]
+            START_CAPTION,
+            reply_markup=start_keyboard(),
+        )
