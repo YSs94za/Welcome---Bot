@@ -4,7 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 def start_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="👨‍💻 Developer", callback_data="developer")],
-        [InlineKeyboardButton(text="📋 Commands", callback_data="commands")],
+        [InlineKeyboardButton(text="📋 Commands",   callback_data="commands")],
     ])
 
 
@@ -15,7 +15,7 @@ def developer_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="✈️ Telegram",  url="https://t.me/Y9_S4"),
         ],
         [
-            InlineKeyboardButton(text="🎵 TikTok",    url="https://www.tiktok.com/@zix8ii?_r=1&_d=f3c01a6371bii9&sec_uid="),
+            InlineKeyboardButton(text="🎵 TikTok",   url="https://www.tiktok.com/@zix8ii?_r=1&_d=f3c01a6371bii9&sec_uid="),
             InlineKeyboardButton(text="👤 Facebook",  url="https://www.facebook.com/share/1BkTUUih6e/"),
         ],
         [
